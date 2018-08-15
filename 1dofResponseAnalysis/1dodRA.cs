@@ -1,5 +1,25 @@
-﻿using System;
+﻿/**
+Copyright (c) 2018 hiron_rgrk
+This software is released under the MIT License.
+See LICENSE
+**/
+
+using System;
+using System.Drawing;
+using System.Collections.Generic;
+
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
+using Grasshopper.Kernel.Attributes;
+using Grasshopper.GUI;
+using Grasshopper.GUI.HTML;
+using Grasshopper.GUI.Canvas;
+using Grasshopper.GUI.Gradient;
+
+using GH_IO.Serialization;
+
+using Rhino.Geometry;
+
 
 /// <summary>
 /// コンポーネントの定義
@@ -75,6 +95,17 @@ namespace GH_NewmarkBeta
         public override Guid ComponentGuid
         {
             get { return new Guid("419c3a3a-cc48-4717-9cef-5f5647a5ecfc"); }
+        }
+
+        /// <summary>
+        /// アイコンの設定。24x24 pixelsが推奨
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return _1dofResponseAnalysis.Properties.Resource.icon;
+            }
         }
     }
 }
