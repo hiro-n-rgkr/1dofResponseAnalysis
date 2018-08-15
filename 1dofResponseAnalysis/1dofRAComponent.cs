@@ -29,9 +29,18 @@ namespace GH_NewmarkBeta
     public class NewmarkBetaComponet : GH_Component
     {
         public NewmarkBetaComponet()
-            : base("1dof Response Analysis", "1dof RA", "Response Analysis of the Single dof", "rgkr", "Response Analysis")
+            : base("1dof Response Analysis",                // 名称
+                   "1dof RA",                               // 略称
+                   "Response Analysis of the Single dof",   // コンポーネントの説明
+                   "rgkr",                                  // カテゴリ(タブの表示名)
+                   "Response Analysis"                      // サブカテゴリ(タブ内の表示名)
+                  )
         {
         }
+
+        /// <summary>
+        /// インプットパラメータの登録
+        /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("Mass", "M", "Lumped Mass", GH_ParamAccess.item);
@@ -42,6 +51,10 @@ namespace GH_NewmarkBeta
             pManager.AddIntegerParameter("N", "N", "Parameters of Newmark β ", GH_ParamAccess.item);
             pManager.AddTextParameter("WAVE", "WAVE", "Parameters of Newmark β ", GH_ParamAccess.item);
         }
+
+        /// <summary>
+        /// アウトプットパラメータの登録
+        /// </summary>
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddNumberParameter("Acceleration", "Acc", "output Acceleration", GH_ParamAccess.item);
@@ -92,6 +105,10 @@ namespace GH_NewmarkBeta
             DA.SetDataList(1, out_v);
             DA.SetDataList(2, out_d);
         }
+
+        /// <summary>
+        /// GUIDの設定
+        /// </summary>
         public override Guid ComponentGuid
         {
             get { return new Guid("419c3a3a-cc48-4717-9cef-5f5647a5ecfc"); }
@@ -108,7 +125,83 @@ namespace GH_NewmarkBeta
             }
         }
     }
+
+
+    public class CalcNaturalPeriodComponet : GH_Component
+    {
+        public CalcNaturalPeriodComponet()
+            : base("Calc Natural Period",                  // 名称
+                   "Calc T",                               // 略称
+                   "Calculation of the Natural Period",    // コンポーネントの説明
+                   "rgkr",                                 // カテゴリ(タブの表示名)
+                   "Response Analysis"                     // サブカテゴリ(タブ内の表示名)
+                  )
+        {
+        }
+
+        /// <summary>
+        /// インプットパラメータの登録
+        /// </summary>
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        {
+            pManager.AddNumberParameter("Mass", "M", "Lumped Mass", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness", GH_ParamAccess.item);
+        }
+
+        /// <summary>
+        /// アウトプットパラメータの登録
+        /// </summary>
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        {
+            pManager.AddNumberParameter("NaturalPeriod", "T", "output Natural Period", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Naturalfrequency", "f", "output Natural Frequency", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Naturalangular frequency", "omega", "output Natural Angular Frequency", GH_ParamAccess.item);
+        }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            // パラメータの定義 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            double M = double.NaN;        // 質量
+            double K = double.NaN;        // 剛性
+            double T = double.NaN;        // 固有周期
+            double f = double.NaN;        // 固有周波数
+            double omega = double.NaN;    // 固有各振動数
+
+            // grasshopper からデータ取得　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            if (!DA.GetData(0, ref M)) { return; }
+            if (!DA.GetData(1, ref K)) { return; }
+
+            // 各値の計算 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            omega = Math.Sqrt(K / M);
+            T = 2.0 * Math.PI / omega;
+            f = 1.0 / T;
+
+            // grassshopper へのデータ出力　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            DA.SetData(0, T);
+            DA.SetData(1, f);
+            DA.SetData(2, omega);
+        }
+
+        /// <summary>
+        /// GUIDの設定
+        /// </summary>
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("419c3a3a-cc48-4823-9cef-5f5647a5ecfc"); }
+        }
+
+        /// <summary>
+        /// アイコンの設定。24x24 pixelsが推奨
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return _1dofResponseAnalysis.Properties.Resource.icon;
+            }
+        }
+    }
 }
+
 /// <summary>
 /// 解析関連
 /// </summary>
