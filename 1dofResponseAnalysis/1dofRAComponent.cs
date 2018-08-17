@@ -43,10 +43,10 @@ namespace GH_NewmarkBeta
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Mass", "M", "Lumped Mass", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Mass", "M", "Lumped Mass(ton)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness(kN/m)", GH_ParamAccess.item);
             pManager.AddNumberParameter("Damping ratio", "h", "Damping ratio", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Time Increment", "dt", "Time Increment", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item);
             pManager.AddNumberParameter("Beta", "Beta", "Parameters of Newmark β ", GH_ParamAccess.item);
             pManager.AddIntegerParameter("N", "N", "Parameters of Newmark β ", GH_ParamAccess.item);
             pManager.AddTextParameter("WAVE", "WAVE", "Parameters of Newmark β ", GH_ParamAccess.item);
@@ -57,9 +57,10 @@ namespace GH_NewmarkBeta
         /// </summary>
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Acceleration", "Acc", "output Acceleration", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Velocity", "Vel", "output Velocity", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Displacement", "Disp", "output Displacement", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Model", "Model", "output Model Infomation", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Acceleration", "Acc", "output Acceleration(cm/s^2)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Velocity", "Vel", "output Velocity(cm/s)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Displacement", "Disp", "output Displacement(cm)", GH_ParamAccess.item);
         }
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -126,7 +127,6 @@ namespace GH_NewmarkBeta
         }
     }
 
-
     public class CalcNaturalPeriodComponet : GH_Component
     {
         public CalcNaturalPeriodComponet()
@@ -144,8 +144,8 @@ namespace GH_NewmarkBeta
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Mass", "M", "Lumped Mass", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Mass", "M", "Lumped Mass(ton)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness(kN/m)", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -153,9 +153,9 @@ namespace GH_NewmarkBeta
         /// </summary>
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("NaturalPeriod", "T", "output Natural Period", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Naturalfrequency", "f", "output Natural Frequency", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Naturalangular frequency", "omega", "output Natural Angular Frequency", GH_ParamAccess.item);
+            pManager.AddNumberParameter("NaturalPeriod", "T", "output Natural Period(sec)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Naturalfrequency", "f", "output Natural Frequency(Hz)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Naturalangular frequency", "omega", "output Natural Angular Frequency(rad/sec)", GH_ParamAccess.item);
         }
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -196,7 +196,139 @@ namespace GH_NewmarkBeta
         {
             get
             {
-                return _1dofResponseAnalysis.Properties.Resource.icon;
+                return _1dofResponseAnalysis.Properties.Resource.calcT_icon;
+            }
+        }
+    }
+
+    public class MTtoKComponet : GH_Component
+    {
+        public MTtoKComponet()
+            : base("Calc K from M & T",                    // 名称
+                   "MTtoK",                                // 略称
+                   "Calculate Stiffness from Mass and Period",    // コンポーネントの説明
+                   "rgkr",                                 // カテゴリ(タブの表示名)
+                   "Response Analysis"                     // サブカテゴリ(タブ内の表示名)
+                  )
+        {
+        }
+
+        /// <summary>
+        /// インプットパラメータの登録
+        /// </summary>
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        {
+            pManager.AddNumberParameter("Mass", "M", "Lumped Mass(ton)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("NaturalPeriod", "T", "Natural Period(sec)", GH_ParamAccess.item);
+        }
+
+        /// <summary>
+        /// アウトプットパラメータの登録
+        /// </summary>
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        {
+            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness(kN/m)", GH_ParamAccess.item);
+        }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            // パラメータの定義 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            double M = double.NaN;        // 質量
+            double K = double.NaN;        // 剛性
+            double T = double.NaN;        // 固有周期
+
+            // grasshopper からデータ取得　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            if (!DA.GetData(0, ref M)) { return; }
+            if (!DA.GetData(1, ref T)) { return; }
+
+            // 各値の計算 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            K = 4.0 * Math.PI * Math.PI / T * T * M;
+
+            // grassshopper へのデータ出力　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            DA.SetData(0, K);
+        }
+
+        /// <summary>
+        /// GUIDの設定
+        /// </summary>
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("419c3a3a-cc48-4825-9cef-5f5647a5ecfc"); }
+        }
+
+        /// <summary>
+        /// アイコンの設定。24x24 pixelsが推奨
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return _1dofResponseAnalysis.Properties.Resource.calcK_icon;
+            }
+        }
+    }
+
+    public class KTtoMComponet : GH_Component
+    {
+        public KTtoMComponet()
+            : base("Calc M from K & T",                    // 名称
+                   "KTtoM",                                // 略称
+                   "Calculate Mass from Stiffness and Period",    // コンポーネントの説明
+                   "rgkr",                                 // カテゴリ(タブの表示名)
+                   "Response Analysis"                     // サブカテゴリ(タブ内の表示名)
+                  )
+        {
+        }
+
+        /// <summary>
+        /// インプットパラメータの登録
+        /// </summary>
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        {
+            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness(kN/m)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("NaturalPeriod", "T", "Natural Period(sec)", GH_ParamAccess.item);
+        }
+
+        /// <summary>
+        /// アウトプットパラメータの登録
+        /// </summary>
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        {
+            pManager.AddNumberParameter("Mass", "M", "Lumped Mass(ton)", GH_ParamAccess.item);
+        }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            // パラメータの定義 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            double M = double.NaN;        // 質量
+            double K = double.NaN;        // 剛性
+            double T = double.NaN;        // 固有周期
+
+            // grasshopper からデータ取得　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            if (!DA.GetData(0, ref K)) { return; }
+            if (!DA.GetData(1, ref T)) { return; }
+
+            // 各値の計算 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            M = K * ( T * T ) / (4.0 * Math.PI * Math.PI);
+
+            // grassshopper へのデータ出力　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            DA.SetData(0, M);
+        }
+
+        /// <summary>
+        /// GUIDの設定
+        /// </summary>
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("419c3a3a-cc48-4830-9cef-5f5647a5ecfc"); }
+        }
+
+        /// <summary>
+        /// アイコンの設定。24x24 pixelsが推奨
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return _1dofResponseAnalysis.Properties.Resource.calcM_icon;
             }
         }
     }

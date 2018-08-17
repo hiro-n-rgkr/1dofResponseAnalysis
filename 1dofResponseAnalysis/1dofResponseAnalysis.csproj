@@ -34,10 +34,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files\Rhino 6\Plug-ins\Grasshopper\GH_IO.dll</HintPath>
     </Reference>
-    <Reference Include="GH_Util, Version=1.0.0.0, Culture=neutral, PublicKeyToken=dda4f5ec2cd80803, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\Rhino 6\Plug-ins\Grasshopper\GH_Util.dll</HintPath>
-    </Reference>
     <Reference Include="Grasshopper, Version=1.0.0.20, Culture=neutral, PublicKeyToken=dda4f5ec2cd80803, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files\Rhino 6\Plug-ins\Grasshopper\Grasshopper.dll</HintPath>
@@ -73,6 +69,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="images\icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="images\calcT_icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="images\calcK_icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="images\calcM_icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
