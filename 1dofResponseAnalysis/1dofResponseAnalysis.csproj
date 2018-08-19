@@ -88,6 +88,9 @@
   <ItemGroup>
     <None Include="images\ResultViewicon.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="images\MakeSinWaveicon.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"

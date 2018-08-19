@@ -41,7 +41,7 @@ namespace GH_NewmarkBeta
             pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item);
             pManager.AddNumberParameter("Beta", "Beta", "Parameters of Newmark β ", GH_ParamAccess.item, 0.25);
             pManager.AddIntegerParameter("N", "N", "Parameters of Newmark β ", GH_ParamAccess.item);
-            pManager.AddTextParameter("WAVE", "WAVE", "Parameters of Newmark β ", GH_ParamAccess.item);
+            pManager.AddTextParameter("Wave", "Wave", "Acceleration Wave(cm/s^2)", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -156,8 +156,8 @@ namespace GH_NewmarkBeta
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddNumberParameter("NaturalPeriod", "T", "output Natural Period(sec)", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Naturalfrequency", "f", "output Natural Frequency(Hz)", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Naturalangular frequency", "omega", "output Natural Angular Frequency(rad/sec)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("NaturalFrequency", "f", "output Natural Frequency(Hz)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("NaturalAngularFrequency", "omega", "output Natural Angular Frequency(rad/sec)", GH_ParamAccess.item);
         }
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -334,7 +334,90 @@ namespace GH_NewmarkBeta
             }
         }
     }
+
+    public class SinWaveComponet : GH_Component
+    {
+        public SinWaveComponet()
+            : base("Make Sin Wave ",                    // 名称
+                   "Make Sin Wave",                                // 略称
+                   "Make Sin Wave",    // コンポーネントの説明
+                   "rgkr",                                 // カテゴリ(タブの表示名)
+                   "Response Analysis"                     // サブカテゴリ(タブ内の表示名)
+                  )
+        {
+        }
+
+        /// <summary>
+        /// インプットパラメータの登録
+        /// </summary>
+        protected override void RegisterInputParams(GH_InputParamManager pManager)
+        {
+            pManager.AddNumberParameter("Amplitude", "A", "Amplitude", GH_ParamAccess.item,1);
+            pManager.AddNumberParameter("Period", "T", "Period(sec)", GH_ParamAccess.item,0.5);
+            pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item,0.02);
+            pManager.AddIntegerParameter("Data Length", "N", "Data Length", GH_ParamAccess.item,100);
+        }
+
+        /// <summary>
+        /// アウトプットパラメータの登録
+        /// </summary>
+        protected override void RegisterOutputParams(GH_OutputParamManager pManager)
+        {
+            pManager.AddTextParameter("Wave", "Wave", "Acceleration Wave(cm/s^2)", GH_ParamAccess.item);
+        }
+
+        /// <summary>
+        /// 解析を実行する箇所
+        /// </summary>
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            // パラメータの定義 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            double A = double.NaN;    
+            double T = double.NaN;
+            double dt = double.NaN;
+            int N = 0;
+
+            // grasshopper からデータ取得　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            if (!DA.GetData(0, ref A)) { return; }
+            if (!DA.GetData(1, ref T)) { return; }
+            if (!DA.GetData(2, ref dt)) { return; }
+            if (!DA.GetData(3, ref N)) { return; }
+
+            // 各値の計算 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            double[] wave = new double[N];
+            for (int i = 0; i<=N-1; ++i)
+            {
+                wave[i] = A * Math.Sin((2 * Math.PI) * (dt / T) * i);
+            }
+            // カンマ区切りのテキストで出力------------------------------
+            String wave_csv = string.Join(",",wave);
+
+            // grassshopper へのデータ出力　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            DA.SetData(0, wave_csv);
+        }
+
+        /// <summary>
+        /// GUIDの設定
+        /// </summary>
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("419c3a3a-cc48-4835-9cef-5f5647a5ecfc"); }
+        }
+
+        /// <summary>
+        /// アイコンの設定。24x24 pixelsが推奨
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return _1dofResponseAnalysis.Properties.Resource.MakeSinWaveicon;
+            }
+        }
+    }
 }
+
+
 
 /// <summary>
 /// 解析関連

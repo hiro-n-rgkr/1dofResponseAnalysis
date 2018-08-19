@@ -103,6 +103,16 @@ namespace _1dofResponseAnalysis.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
+        internal static System.Drawing.Bitmap MakeSinWaveicon {
+            get {
+                object obj = ResourceManager.GetObject("MakeSinWaveicon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
         internal static System.Drawing.Bitmap ModelViewicon {
             get {
                 object obj = ResourceManager.GetObject("ModelViewicon", resourceCulture);
