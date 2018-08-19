@@ -459,7 +459,7 @@ namespace ModelView
         {
             get
             {
-                return _1dofResponseAnalysis.Properties.Resource.icon;
+                return _1dofResponseAnalysis.Properties.Resource.ResultViewicon;
             }
         }
     }
@@ -533,7 +533,6 @@ namespace ModelView
             Srf[1] = FirstMass.ToRevSurface();
 
             DA.SetDataList(0, Srf);
-
         }
 
         /// <summary>
@@ -551,7 +550,7 @@ namespace ModelView
         {
             get
             {
-                return _1dofResponseAnalysis.Properties.Resource.icon;
+                return _1dofResponseAnalysis.Properties.Resource.ModelViewicon;
             }
         }
     }
