@@ -35,12 +35,12 @@ namespace GH_NewmarkBeta
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Mass", "M", "Lumped Mass(ton)", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness(kN/m)", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Damping ratio", "h", "Damping ratio", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Mass", "M", "Lumped Mass(ton)", GH_ParamAccess.item, 10);
+            pManager.AddNumberParameter("Stiffness", "K", "Spring Stiffness(kN/m)", GH_ParamAccess.item, 10);
+            pManager.AddNumberParameter("Damping ratio", "h", "Damping ratio", GH_ParamAccess.item, 0.02);
+            pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item, 0.02);
             pManager.AddNumberParameter("Beta", "Beta", "Parameters of Newmark β ", GH_ParamAccess.item, 0.25);
-            pManager.AddIntegerParameter("N", "N", "Parameters of Newmark β ", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("N", "N", "Parameters of Newmark β ", GH_ParamAccess.item,1000);
             pManager.AddTextParameter("Wave", "Wave", "Acceleration Wave(cm/s^2)", GH_ParamAccess.item);
         }
 
@@ -355,7 +355,7 @@ namespace GH_NewmarkBeta
             pManager.AddNumberParameter("Amplitude", "A", "Amplitude", GH_ParamAccess.item,1);
             pManager.AddNumberParameter("Period", "T", "Period(sec)", GH_ParamAccess.item,0.5);
             pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item,0.02);
-            pManager.AddIntegerParameter("Data Length", "N", "Data Length", GH_ParamAccess.item,100);
+            pManager.AddIntegerParameter("Data Length", "N", "Data Length", GH_ParamAccess.item,1000);
         }
 
         /// <summary>
@@ -486,9 +486,10 @@ namespace ModelView
         {
             pManager.AddNumberParameter("Model", "Model", "Model Data", GH_ParamAccess.list);
             pManager.AddNumberParameter("Result", "Result", "Analysis Result", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Output Number", "N", "Output Result Number", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("Scale", "Sc", "Scale Model", GH_ParamAccess.item, 10);
-            pManager.AddNumberParameter("High", "H", "High Model", GH_ParamAccess.item, 10);
+            pManager.AddIntegerParameter("Output Number", "N", "Output Result Number", GH_ParamAccess.item, 100);
+            pManager.AddNumberParameter("Model Scale", "MSc", "Scale Model", GH_ParamAccess.item, 10);
+            pManager.AddNumberParameter("Result Scale", "RSc", "Scale Model", GH_ParamAccess.item, 100);
+            pManager.AddNumberParameter("High", "H", "High Model", GH_ParamAccess.item, 3000);
         }
 
         /// <summary>
@@ -496,7 +497,7 @@ namespace ModelView
         /// </summary>
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Surface", "Srf", "Output Model Surface", GH_ParamAccess.item);
+            pManager.AddSurfaceParameter("Surface", "Srf", "Output Model Surface", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -507,24 +508,43 @@ namespace ModelView
             // パラメータの定義 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             List<double> Model = new List<double>();
             List<double> Rslt = new List<double>();
-            int N = 0;
-            double Sc = double.NaN;
+            double MSc = double.NaN;
+            double RSc = double.NaN;
             double H = double.NaN;
             double M = double.NaN;
+            double K = double.NaN;
+            int N = 100;
 
             // grasshopper からデータ取得　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             if (!DA.GetDataList(0, Model)) { return; }
             if (!DA.GetDataList(1, Rslt)) { return; }
             if (!DA.GetData(2, ref N)) { return; }
+            if (!DA.GetData(3, ref MSc)) { return; }
+            if (!DA.GetData(4, ref RSc)) { return; }
+            if (!DA.GetData(5, ref H)) { return; }
 
-            // モデルのrhino上への出力＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
-            Point3d FMorigin = new Point3d(0, 0, H);
-            Point3d FMp1 = new Point3d(1, 0, H);
-            Point3d FMp2 = new Point3d(0, 1, H);
+            // 質点の作成＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            Point3d FMorigin = new Point3d(RSc * Rslt[N], 0, H);
+            Point3d FMp1 = new Point3d(RSc * Rslt[N]+1, 0, H);
+            Point3d FMp2 = new Point3d(RSc * Rslt[N], 1, H);
             Plane FMplane = new Plane(FMorigin, FMp1, FMp2);
             M = Model[0];
+            Sphere FirstMass = new Sphere(FMplane, MSc * M);
 
-            DA.SetData(0, new Sphere(FMplane, Sc*M));
+            // バネの作成＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            Point3d FSPGorigin = new Point3d(0, 0, 0);
+            Point3d FSPGp1 = new Point3d(H, 0, RSc * -Rslt[N]);
+            Point3d FSPGp2 = new Point3d(0, 1, 0);
+            Plane FSPGplane = new Plane(FSPGorigin, FSPGp1, FSPGp2);
+            K = Model[1];
+            Cylinder FirstSpring = new Cylinder(new Circle(FSPGplane, MSc * K / 50), H - MSc * M);
+
+            // モデルのrhino上への出力＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            var Srf = new Surface[2];
+            Srf[0] = FirstSpring.ToRevSurface();
+            Srf[1] = FirstMass.ToRevSurface();
+
+            DA.SetDataList(0, Srf);
         }
 
         /// <summary>
@@ -532,7 +552,7 @@ namespace ModelView
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("419c3a3a-cc48-4715-9cef-5f5647a5ecfc"); }
+            get { return new Guid("419c3a3a-cc48-4701-9cef-5f5648a5ecfc"); }
         }
 
         /// <summary>
@@ -564,7 +584,7 @@ namespace ModelView
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Model", "Model", "Model Data", GH_ParamAccess.item,100);
+            pManager.AddNumberParameter("Model", "Model", "Model Data", GH_ParamAccess.list);
             pManager.AddNumberParameter("Scale", "Sc", "Scale Model", GH_ParamAccess.item, 10);
             pManager.AddNumberParameter("High", "H", "High Model", GH_ParamAccess.item, 3500);
         }
@@ -583,14 +603,14 @@ namespace ModelView
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             // パラメータの定義 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            List<double> Model = new List<double>();
             double Sc = double.NaN;
             double H = double.NaN;
             double M = double.NaN;
             double K = double.NaN;
-            double Model = double.NaN;
 
             // grasshopper からデータ取得　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
-            if (!DA.GetData(0, ref Model)) { return; }
+            if (!DA.GetDataList(0, Model)) { return; }
             if (!DA.GetData(1, ref Sc)) { return; }
             if (!DA.GetData(2, ref H)) { return; }
 
@@ -599,7 +619,7 @@ namespace ModelView
             Point3d FMp1 = new Point3d(1, 0, H);
             Point3d FMp2 = new Point3d(0, 1, H);
             Plane FMplane = new Plane(FMorigin, FMp1, FMp2);
-            M = Model;
+            M = Model[0];
             Sphere FirstMass = new Sphere(FMplane, Sc * M);
 
             // バネの作成＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
@@ -607,8 +627,8 @@ namespace ModelView
             Point3d FSPGp1 = new Point3d(1, 0, 0);
             Point3d FSPGp2 = new Point3d(0, 1, 0);
             Plane FSPGplane = new Plane(FSPGorigin, FSPGp1, FSPGp2);
-            K = Model/10.0;
-            Cylinder FirstSpring = new Cylinder(new Circle(FSPGplane, Sc * K), H-Sc*M);
+            K = Model[1];
+            Cylinder FirstSpring = new Cylinder(new Circle(FSPGplane, Sc * K / 50), H-Sc*M);
 
             // モデルのrhino上への出力＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             var Srf = new Surface[2];
