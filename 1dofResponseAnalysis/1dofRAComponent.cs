@@ -352,7 +352,7 @@ namespace GH_NewmarkBeta
         /// </summary>
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Amplitude", "A", "Amplitude", GH_ParamAccess.item,1);
+            pManager.AddNumberParameter("Amplitude", "A", "Amplitude", GH_ParamAccess.item,100);
             pManager.AddNumberParameter("Period", "T", "Period(sec)", GH_ParamAccess.item,0.5);
             pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item,0.02);
             pManager.AddIntegerParameter("Data Length", "N", "Data Length", GH_ParamAccess.item,1000);
@@ -537,7 +537,7 @@ namespace ModelView
             Point3d FSPGp2 = new Point3d(0, 1, 0);
             Plane FSPGplane = new Plane(FSPGorigin, FSPGp1, FSPGp2);
             K = Model[1];
-            Cylinder FirstSpring = new Cylinder(new Circle(FSPGplane, MSc * K / 50), H - MSc * M);
+            Cylinder FirstSpring = new Cylinder(new Circle(FSPGplane, MSc * K / 50), Math.Sqrt(RSc*RSc*Rslt[N] * Rslt[N] + H*H ) - MSc * M);
 
             // モデルのrhino上への出力＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             var Srf = new Surface[2];
