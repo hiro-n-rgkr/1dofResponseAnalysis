@@ -243,7 +243,7 @@ namespace GH_NewmarkBeta
             if (!DA.GetData(1, ref T)) { return; }
 
             // 各値の計算 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
-            K = 4.0 * Math.PI * Math.PI / T * T * M;
+            K = 4.0 * Math.PI * Math.PI / (T * T) * M;
 
             // grassshopper へのデータ出力　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             DA.SetData(0, K);
