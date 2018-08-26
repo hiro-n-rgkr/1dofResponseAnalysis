@@ -41,7 +41,7 @@ namespace GH_NewmarkBeta
             pManager.AddNumberParameter("Time Increment", "dt", "Time Increment(sec)", GH_ParamAccess.item, 0.02);
             pManager.AddNumberParameter("Beta", "Beta", "Parameters of Newmark β ", GH_ParamAccess.item, 0.25);
             pManager.AddIntegerParameter("N", "N", "Parameters of Newmark β ", GH_ParamAccess.item,1000);
-            pManager.AddTextParameter("Wave", "Wave", "Acceleration Wave(cm/s^2)", GH_ParamAccess.item);
+            pManager.AddTextParameter("Wave", "Wave", "Acceleration Wave(m/s^2)", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -50,9 +50,13 @@ namespace GH_NewmarkBeta
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddNumberParameter("Model", "Model", "output Model Data", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Acceleration", "Acc", "output Acceleration(cm/s^2)", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Velocity", "Vel", "output Velocity(cm/s)", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Displacement", "Disp", "output Displacement(cm)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Acceleration", "Acc", "output Acceleration(m/s^2)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Velocity", "Vel", "output Velocity(m/s)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Displacement", "Disp", "output Displacement(m)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Total E", "Eo", "output Total Input Energy(kNm)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Internal E", "Ei", "output Internal Viscous Damping Energy(kNm)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Kinetic E", "Ek", "output Kinetic Energy(kNm)", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Potential E", "Ep", "output Potential Energy(kNm)", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -62,10 +66,11 @@ namespace GH_NewmarkBeta
         {
             // パラメータの定義 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             List<double> Model = new List<double>();
-            double M = double.NaN;    // 質量
-            double K = double.NaN;    // 剛性
+            double M = double.NaN;    // 質量 ton
+            double K = double.NaN;    // 剛性 kN/m
             double h = double.NaN;    // 減衰定数
-            double dt = double.NaN;   // 時間刻み
+            double g = 9.80665;       // 重力加速度 m/s^2
+            double dt = double.NaN;   // 時間刻み sec
             double beta = double.NaN; // 解析パラメータ
             int N = 0;                // 波形データ数
             string wave_str = "0";
@@ -95,18 +100,29 @@ namespace GH_NewmarkBeta
             }
 
             //　応答解析　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
-            double[] out_a = new double[N];
-            double[] out_v = new double[N];
-            double[] out_d = new double[N];
+            double[] outAcc = new double[N];
+            double[] outVel = new double[N];
+            double[] outDisp = new double[N];
+            double[] outEo = new double[N];
+            double[] outEi = new double[N];
+            double[] outEk = new double[N];
+            double[] outEs = new double[N];
 
             Solver.NewmarkBeta_solver slv = new Solver.NewmarkBeta_solver();
-            slv.NewmarkBeta(M, K, h, dt, beta, N, wave, ref out_a, ref out_v, ref out_d);
-
+            slv.NewmarkBeta(M/g, K, h, dt, beta, N, wave,
+                            ref outAcc, ref outVel, ref outDisp,
+                            ref outEo, ref outEi, ref outEk, ref outEs
+                            );
+            
             // grassshopper へのデータ出力　＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             DA.SetDataList(0, Model);
-            DA.SetDataList(1, out_a);
-            DA.SetDataList(2, out_v);
-            DA.SetDataList(3, out_d);
+            DA.SetDataList(1, outAcc);
+            DA.SetDataList(2, outVel);
+            DA.SetDataList(3, outDisp);
+            DA.SetDataList(4, outEo);
+            DA.SetDataList(5, outEi);
+            DA.SetDataList(6, outEk);
+            DA.SetDataList(7, outEs);
         }
 
         /// <summary>
@@ -429,15 +445,21 @@ namespace Solver
     /// </summary>
     public class NewmarkBeta_solver
     {
-        public void NewmarkBeta(double m, double k, double h, double dt, double beta, int N, double[] Ag, ref double[] out_a, ref double[] out_v, ref double[] out_d)
+        public void NewmarkBeta(double m, double k, double h, double dt, double beta, int N, double[] Ag,
+                                ref double[] out_a, ref double[] out_v, ref double[] out_d,
+                                ref double[] outEo, ref double[] outEi, ref double[] outEk, ref double[] outEp
+                               )
+
+
         {
-            // 解析関連パラメータ-----------------------------
-            double a = 0.0, v = 0.0, x = 0.0, an = 0.0, vn = 0.0;
+            // 解析関連パラメータ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+            double a = 0.0, v = 0.0, x = 0.0, an = 0.0, vn = 0.0, xn = 0.0;
             double a0 = Ag[0];                   // 初期加速度
             double v0 = 0.0;                     // 初期速度
             double d0 = 0.0;                     // 初期変位
-            double c = 2 * h * Math.Sqrt(m * k); // 粘性減衰定数
+            double c = 2 * h * Math.Sqrt(m * k); // 粘性減衰定数 (kN s/m)
 
+            // 解析個所 ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             for (int n = 0; n < N; n++)
             {
                 if (n == 0)  // t = 0 の時
@@ -445,6 +467,12 @@ namespace Solver
                     a = a0;
                     v = v0;
                     x = d0;
+
+                    // 各エネルギー結果--------------------------------------------
+                    outEp[n] = 0; // 弾性ひずみエネルギー
+                    outEk[n] = 0; // 運動エネルギー
+                    outEi[n] = 0; // 内部粘性減衰エネルギー
+                    outEo[n] = 0; // 総入力エネルギー
                 }
                 else       //  t ≠ 0 の時
                 {
@@ -452,14 +480,22 @@ namespace Solver
                         / (m + c * dt / 2.0 + k * (dt * dt) * beta);
                     v = v + (1.0 / 2.0) * (a + an) * dt;
                     x = x + vn * dt + beta * (a + 2.0 * an) * (dt * dt);
+
+                    // 各エネルギー結果--------------------------------------------
+                    outEp[n] = 1.0 / 2.0 * k * (x * x);         // 弾性ひずみエネルギー
+                    outEk[n] = 1.0 / 2.0 * (m) * (v * v);       // 運動エネルギー
+                    outEi[n] = c * (v * v) + outEi[n - 1];      // 内部粘性減衰エネルギー
+                    outEo[n] = outEp[n] + outEk[n] + outEi[n];  // 総入力エネルギー
                 }
-                // 結果を出力配列に入れる。
-                out_a[n] = a;
-                out_v[n] = v;
-                out_d[n] = x;
+
+                // 結果を出力配列に格納＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+                out_a[n] = a;  // 加速度
+                out_v[n] = v;  // 速度
+                out_d[n] = x;  // 変位
 
                 an = a;
                 vn = v;
+                xn = x;
             }
         }
     }
@@ -537,7 +573,7 @@ namespace ModelView
             Point3d FSPGp2 = new Point3d(0, 1, 0);
             Plane FSPGplane = new Plane(FSPGorigin, FSPGp1, FSPGp2);
             K = Model[1];
-            Cylinder FirstSpring = new Cylinder(new Circle(FSPGplane, MSc * K / 50), Math.Sqrt(RSc*RSc*Rslt[N] * Rslt[N] + H*H ) - MSc * M);
+            Cylinder FirstSpring = new Cylinder(new Circle(FSPGplane, MSc * M / 10), Math.Sqrt(RSc*RSc*Rslt[N] * Rslt[N] + H*H ) - MSc * M);
 
             // モデルのrhino上への出力＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
             var Srf = new Surface[2];
