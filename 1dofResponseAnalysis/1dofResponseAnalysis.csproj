@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EEA42804-21AE-469F-BD84-D1A41B821209}</ProjectGuid>
+    <ProjectGuid>{0698CAF4-D2CE-42CE-8C4F-71E826B6E9BE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>_1dofResponseAnalysis</RootNamespace>
