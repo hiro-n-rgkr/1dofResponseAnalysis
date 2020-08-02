@@ -16,10 +16,7 @@ Make for Rhino6 of Windows
 hiron_rgkr  
 twitter: https://twitter.com/hiron_rgkr
 
-# How to Use  
-## Commentary Video  
-[![](http://img.youtube.com/vi/4HIVYRezRaI/sddefault.jpg)](https://www.youtube.com/watch?v=4HIVYRezRaI&t=3s)
-   
+# How to Use     
 ## List of Component  
 ![List of Component](https://github.com/hiro-n-rgkr/1dofResponseAnalysis/blob/master/1dofResponseAnalysis/images/ListOfComponent.jpg)
   
@@ -54,3 +51,6 @@ twitter: https://twitter.com/hiron_rgkr
   + ver 0.1.00  
     基本的な機能を揃え、ver 0.1.0としてリリース  
     Prepare a basic function and release it as ver 0.1.0  
+    
+# Video  
+[![](http://img.youtube.com/vi/4HIVYRezRaI/sddefault.jpg)](https://www.youtube.com/watch?v=4HIVYRezRaI&t=3s)
